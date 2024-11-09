@@ -24,6 +24,14 @@ if ($pass1 != $pass2) {
     exit();
 }
 
+
+
+// Utwórz katalog macierzysty użytkownika
+$targetDir = "usersCatalogs/" . $login;  // Katalog o nazwie loginu
+if (!is_dir($targetDir)) {
+    mkdir($targetDir, 0755, true);  // Tworzy katalog z odpowiednimi uprawnieniami
+}
+
 function uploadAvatar($file) {
     $targetDir = "avatars/"; // Katalog, do którego będą przesyłane obrazy
     $defaultAvatar = 'avatars/default_avatar.jpg'; // Ścieżka do domyślnego awatara
@@ -66,8 +74,8 @@ $stmt = mysqli_prepare($link, "INSERT INTO users (login, password, avatar) VALUE
 mysqli_stmt_bind_param($stmt, 'sss', $login, $pass1, $avatarPath);
 
 if (mysqli_stmt_execute($stmt)) {
-    echo "Użytkownik dodany pomyślnie!";
-    echo "<br><a href='Zaloguj.php'>Zaloguj się</a>";
+    header("Location: Zaloguj.php");
+    exit();
 } else {
     echo "Błąd: " . mysqli_error($link);
 }
