@@ -41,6 +41,31 @@ if (isset($_GET['delete'])) {
         echo "<script>alert('Błąd: Plik lub katalog nie istnieje.');</script>";
     }
 }
+
+// Funkcja do generowania miniaturki obrazu
+function getImageThumbnail($filePath) {
+    $imgInfo = getimagesize($filePath);
+    $allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+    if (in_array($imgInfo['mime'], $allowedTypes)) {
+        return '<img src="' . $filePath . '" style="width: 100px; height: auto;"/>';
+    }
+    return '';
+}
+
+// Funkcja do generowania odtwarzacza audio
+function getAudioPlayer($filePath) {
+    return '<audio controls><source src="' . $filePath . '" type="audio/mpeg">Your browser does not support the audio element.</audio>';
+}
+
+// Funkcja do generowania odtwarzacza wideo
+function getVideoPlayer($filePath) {
+    return '<video controls><source src="' . $filePath . '" type="video/mp4">Your browser does not support the video element.</video>';
+}
+
+// Funkcja do generowania linku do pobrania
+function getDownloadLink($filePath) {
+    return '<a href="download.php?file=' . urlencode(basename($filePath)) . '&dir=' . urlencode($_GET['dir'] ?? '') . '" class="btn btn-success btn-sm">Pobierz</a>';
+}
 ?>
 
 <!DOCTYPE html>
@@ -85,37 +110,74 @@ if (isset($_GET['delete'])) {
         <h1>Witaj, <?php echo $_SESSION['login']; ?>!</h1>
         <h3>Twoje pliki i katalogi:</h3>
 
+        <!-- Jeśli nie jesteś w katalogu głównym, wyświetl przycisk powrotu -->
         <?php if ($currentDir != $userDir): ?>
-            <!-- Ikona powrotu do katalogu macierzystego -->
-            <a href="panelZalogowany.php" class="btn btn-secondary">
+            <a href="panelZalogowany.php" class="btn btn-secondary mb-3">
                 <i class="fa fa-level-up"></i> Powrót do katalogu głównego
             </a>
-            <br><br>
         <?php endif; ?>
 
+        <!-- Jeśli nie ma plików -->
         <?php if (empty($files)): ?>
             <p>Brak plików ani podkatalogów w tym katalogu.</p>
         <?php else: ?>
-            <ul>
-                <?php foreach ($files as $file): ?>
-                    <li>
-                        <?php 
-                        $filePath = $currentDir . '/' . $file;
-                        if (is_dir($filePath)) {  
-                            echo "[Katalog] <a href='panelZalogowany.php?dir=" . urlencode($file) . "'>$file</a>";
-                        } else {
-                            echo $file;
-                        }
-                        ?>
-                        <!-- Przycisk do usunięcia pliku lub katalogu -->
-                        <a href="panelZalogowany.php?delete=<?php echo urlencode($file); ?>" class="btn btn-danger btn-sm" onclick="return confirm('Czy na pewno chcesz usunąć ten element?');">
-                            <i class="fa fa-trash"></i> Usuń
-                        </a>
-                    </li>
-                <?php endforeach; ?>
-            </ul>
+            <!-- Wyświetlanie plików w tabeli -->
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Element</th>
+                            <th>Podgląd</th>
+                            <th>Akcje</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($files as $file): ?>
+                            <tr>
+                                <td>
+                                    <?php 
+                                    $filePath = $currentDir . '/' . $file;
+                                    $fileExtension = pathinfo($filePath, PATHINFO_EXTENSION);
+
+                                    // Wyświetlanie podkatalogów
+                                    if (is_dir($filePath)) {
+                                        echo "[Katalog] <a href='panelZalogowany.php?dir=" . urlencode($_GET['dir'] ?? '') . '/' . urlencode($file) . "'>$file</a>";
+                                    } else {
+                                        echo $file . ' ';
+                                    }
+                                    ?>
+                                </td>
+                                <td>
+                                    <?php 
+                                    // Obsługa podglądu mediów
+                                    if (in_array($fileExtension, ['jpg', 'jpeg', 'png', 'gif'])) {
+                                        echo getImageThumbnail($filePath);
+                                    } elseif (in_array($fileExtension, ['mp3', 'wav'])) {
+                                        echo getAudioPlayer($filePath);
+                                    } elseif (in_array($fileExtension, ['mp4', 'mov', 'avi'])) {
+                                        echo getVideoPlayer($filePath);
+                                    }
+                                    ?>
+                                </td>
+                                <td>
+                                    <!-- Przycisk usunięcia pliku lub katalogu -->
+                                    <a href="panelZalogowany.php?delete=<?php echo urlencode($file); ?>" class="btn btn-danger btn-sm" onclick="return confirm('Czy na pewno chcesz usunąć ten element?');">
+                                        <i class="fa fa-trash"></i> Usuń
+                                    </a>
+                                    <!-- Link do pobrania pliku -->
+                                    <?php echo getDownloadLink($filePath); ?>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
         <?php endif; ?>
-        <a href="select.php">Dodaj plik</a>
+
+        <!-- Link do dodania pliku -->
+        <a href="select.php?dir=<?php echo urlencode(isset($_GET['dir']) ? $_GET['dir'] : ''); ?>" class="btn btn-primary mt-3">
+            <i class="fa fa-upload"></i> Dodaj plik
+        </a>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>

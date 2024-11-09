@@ -7,32 +7,31 @@ if (!isset($_SESSION['loggedin'])) {
     exit();
 }
 
-$login = $_SESSION['login'];  // Pobieramy login użytkownika z sesji
-$target_dir = "usersCatalogs/" . $login . "/";  // Katalog użytkownika
+// Określamy katalog główny użytkownika
+$login = $_SESSION['login'];
+$userDir = "usersCatalogs/" . $login . "/";
 
+// Jeśli użytkownik jest w podkatalogu, dodajemy go do ścieżki
 $currentDir = isset($_POST['currentDir']) ? $userDir . $_POST['currentDir'] . '/' : $userDir; // Jeśli jest podkatalog, dodajemy go do ścieżki
+
 // Pełna ścieżka do pliku
-$target_file = $target_dir . basename($_FILES["fileToUpload"]["name"]);
+$target_file = $currentDir . basename($_FILES["fileToUpload"]["name"]);
 
-// Sprawdzamy, czy plik jest poprawny
-if (isset($_POST["submit"])) {
-    $uploadOk = 1; 
-    if (file_exists($target_file)) {
-        echo "<script>alert('Błąd: Plik już istnieje');</script>";
-        $uploadOk = 0;
-    }
+// Sprawdzamy, czy katalog użytkownika istnieje, jeśli nie, tworzymy go
+if (!file_exists($currentDir)) {
+    mkdir($currentDir, 0777, true); // Tworzymy katalog, jeśli nie istnieje
+}
 
+// Sprawdzamy, czy plik już istnieje
+if (file_exists($target_file)) {
+    echo "<script>alert('Błąd: Plik już istnieje');</script>";
+    exit();
+}
 
-    // Sprawdzamy, czy zmienna $uploadOk nie została ustawiona na 0 przez jakiś błąd
-    if ($uploadOk == 0) {
-        echo "Plik nie został przesłany.";
-    } else {
-        // Jeśli wszystkie warunki są spełnione, próbujemy przesłać plik
-        if (move_uploaded_file($_FILES["fileToUpload"]["tmp_name"], $target_file)) {
-            header("Location: panelZalogowany.php");
-        } else {
-            echo "<script>alert('Wystąpił błąd');</script>";
-        }
-    }
+// Przenosimy plik
+if (move_uploaded_file($_FILES["fileToUpload"]["tmp_name"], $target_file)) {
+    header("Location: panelZalogowany.php");
+} else {
+    echo "<script>alert('Wystąpił błąd podczas przesyłania pliku');</script>";
 }
 ?>
