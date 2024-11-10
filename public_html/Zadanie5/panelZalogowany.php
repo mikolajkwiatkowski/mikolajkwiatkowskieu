@@ -66,6 +66,30 @@ function getVideoPlayer($filePath) {
 function getDownloadLink($filePath) {
     return '<a href="download.php?file=' . urlencode(basename($filePath)) . '&dir=' . urlencode($_GET['dir'] ?? '') . '" class="btn btn-success btn-sm">Pobierz</a>';
 }
+
+
+// Sprawdzanie, czy użytkownik wysłał żądanie utworzenia nowego folderu
+if (isset($_POST['createFolder'])) {
+    $folderName = trim($_POST['folderName']);
+    
+    // Sprawdzenie, czy nazwa folderu jest poprawna
+    if (!empty($folderName)) {
+        // Ścieżka do nowego folderu
+        $newFolderPath = $currentDir . '/' . $folderName;
+        
+        // Tworzenie folderu, jeśli jeszcze nie istnieje
+        if (!file_exists($newFolderPath)) {
+            mkdir($newFolderPath, 0777, true);
+            header("Location: panelZalogowany.php?dir=" . urlencode($_GET['dir'] ?? ''));
+            exit();
+        } else {
+            echo "<script>alert('Folder o tej nazwie już istnieje.');</script>";
+        }
+    } else {
+        echo "<script>alert('Proszę podać nazwę folderu.');</script>";
+    }
+}
+
 ?>
 
 <!DOCTYPE html>
@@ -92,14 +116,7 @@ function getDownloadLink($filePath) {
                     <li class="nav-item"><a class="nav-link active" aria-current="page" href="panelZalogowany.php"><?php echo $_SESSION['login'] ?></a></li>
                     <img src="<?php echo $_SESSION['avatar']; ?>" alt="Avatar" style="width: 40px; height: 40px; border-radius: 50%; margin-left: 10px;">
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" id="navbarDropdown" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Polecenia</a>
-                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
-                            <li><a class="dropdown-item" href="polecenie1_1.php">netstat.php</a></li>
-                            <li>
-                                <hr class="dropdown-divider" />
-                            </li>
-                            <li><a class="dropdown-item" href="geolokalizacja.php">Geolokalizacja</a></li>
-                        </ul>
+                        
                     </li>
                 </ul>
             </div>
@@ -173,6 +190,15 @@ function getDownloadLink($filePath) {
                 </table>
             </div>
         <?php endif; ?>
+<!-- Formularz do dodania nowego folderu -->
+        <div class="mt-4">
+            <form action="panelZalogowany.php" method="POST" class="d-flex align-items-center">
+                <input type="text" name="folderName" placeholder="Nazwa nowego folderu" required class="form-control me-2">
+                <button type="submit" name="createFolder" class="btn btn-primary">
+                    <i class="fa fa-folder-plus"></i> Dodaj folder
+                </button>
+            </form>
+        </div>
 
         <!-- Link do dodania pliku -->
         <a href="select.php?dir=<?php echo urlencode(isset($_GET['dir']) ? $_GET['dir'] : ''); ?>" class="btn btn-primary mt-3">
